@@ -1,0 +1,386 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tenant (gym)
+model Tenant {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  logo          String?
+  primaryColor  String?     @default("#6366f1")
+  address       String?
+  phone         String?
+  email         String?
+  isActive      Boolean     @default(true)
+  plan          TenantPlan  @default(FREE)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  users         User[]
+  membershipPlans MembershipPlan[]
+  classes       Class[]
+  workouts      Workout[]
+}
+
+enum TenantPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+// User
+model User {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+  email         String
+  passwordHash  String
+  firstName     String
+  lastName      String
+  phone         String?
+  avatar        String?
+  role          UserRole
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  memberProfile Member?
+  trainerProfile Trainer?
+  bookings      Booking[]
+  workoutSessions WorkoutSession[]
+  refreshTokens RefreshToken[]
+  notifications Notification[]
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  GYM_OWNER
+  GYM_ADMIN
+  TRAINER
+  MEMBER
+}
+
+// Refresh Token
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([userId])
+}
+
+// Member Profile
+model Member {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dateOfBirth     DateTime?
+  gender          Gender?
+  emergencyContact String?
+  healthNotes     String?
+  height          Float?
+  weight          Float?
+  bodyFat         Float?
+  joinDate        DateTime  @default(now())
+  subscription    Subscription?
+  bodyMetrics     BodyMetric[]
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+// Trainer Profile
+model Trainer {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specializations String[]
+  bio             String?
+  certifications  String[]
+  rating          Float?   @default(0)
+  classes         Class[]
+  workouts        Workout[]
+}
+
+// Membership Plan
+model MembershipPlan {
+  id            String    @id @default(cuid())
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  name          String
+  description   String?
+  price         Decimal   @db.Decimal(10, 2)
+  currency      String    @default("LKR")
+  duration      Int
+  durationType  DurationType
+  features      String[]
+  maxMembers    Int?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  subscriptions Subscription[]
+  @@index([tenantId])
+}
+
+enum DurationType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+// Subscription
+model Subscription {
+  id          String             @id @default(cuid())
+  memberId    String             @unique
+  member      Member             @relation(fields: [memberId], references: [id])
+  planId      String
+  plan        MembershipPlan     @relation(fields: [planId], references: [id])
+  startDate   DateTime
+  endDate     DateTime
+  status      SubscriptionStatus @default(ACTIVE)
+  autoRenew   Boolean            @default(false)
+  payments    Payment[]
+  @@index([status])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+  CANCELLED
+}
+
+// Payment
+model Payment {
+  id              String        @id @default(cuid())
+  subscriptionId  String
+  subscription    Subscription  @relation(fields: [subscriptionId], references: [id])
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("LKR")
+  status          PaymentStatus
+  paymentMethod   String?
+  payhereOrderId  String?       @unique
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// Class
+model Class {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  trainerId   String
+  trainer     Trainer     @relation(fields: [trainerId], references: [id])
+  name        String
+  description String?
+  type        ClassType
+  startTime   DateTime
+  endTime     DateTime
+  recurrence  Recurrence?
+  maxCapacity Int
+  currentCount Int        @default(0)
+  location    String?
+  isActive    Boolean     @default(true)
+  bookings    Booking[]
+  @@index([tenantId, startTime])
+}
+
+enum ClassType {
+  YOGA
+  HIIT
+  CROSSFIT
+  ZUMBA
+  PILATES
+  SPINNING
+  BOXING
+  STRENGTH
+  CARDIO
+  FLEXIBILITY
+  CUSTOM
+}
+
+enum Recurrence {
+  NONE
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+// Booking
+model Booking {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  classId     String
+  class       Class         @relation(fields: [classId], references: [id])
+  status      BookingStatus @default(CONFIRMED)
+  bookedAt    DateTime      @default(now())
+  cancelledAt DateTime?
+  @@unique([userId, classId])
+  @@index([classId])
+}
+
+enum BookingStatus {
+  CONFIRMED
+  WAITLISTED
+  CANCELLED
+  ATTENDED
+  NO_SHOW
+}
+
+// Workout
+model Workout {
+  id            String            @id @default(cuid())
+  tenantId      String
+  tenant        Tenant            @relation(fields: [tenantId], references: [id])
+  trainerId     String
+  trainer       Trainer           @relation(fields: [trainerId], references: [id])
+  title         String
+  description   String?
+  visibility    WorkoutVisibility @default(PUBLIC)
+  difficulty    Difficulty
+  duration      Int
+  targetMuscles String[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  exercises     WorkoutExercise[]
+  sessions      WorkoutSession[]
+}
+
+enum WorkoutVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+// Exercise
+model Exercise {
+  id              String   @id @default(cuid())
+  name            String
+  description     String?
+  muscleGroup     String
+  secondaryMuscles String[]
+  equipment       String?
+  videoUrl        String?
+  imageUrl        String?
+  instructions    String[]
+  workoutExercises WorkoutExercise[]
+}
+
+// Workout Exercise (junction)
+model WorkoutExercise {
+  id          String    @id @default(cuid())
+  workoutId   String
+  workout     Workout   @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exercise    Exercise  @relation(fields: [exerciseId], references: [id])
+  order       Int
+  sets        Int
+  reps        String?
+  weight      String?
+  restSeconds Int?
+  notes       String?
+  @@index([workoutId])
+}
+
+// Workout Session (Trainer posts)
+model WorkoutSession {
+  id          String            @id @default(cuid())
+  workoutId   String
+  workout     Workout           @relation(fields: [workoutId], references: [id])
+  trainerId   String
+  user        User              @relation(fields: [trainerId], references: [id])
+  title       String
+  notes       String?
+  visibility  WorkoutVisibility @default(PUBLIC)
+  photos      String[]
+  completedAt DateTime?
+  postedAt    DateTime          @default(now())
+  sessionLogs SessionLog[]
+}
+
+// Session Log
+model SessionLog {
+  id          String          @id @default(cuid())
+  sessionId   String
+  session     WorkoutSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exerciseName String
+  sets        Int
+  reps        Int
+  weight      Float?
+  duration    Int?
+  notes       String?
+}
+
+// Body Metric
+model BodyMetric {
+  id          String   @id @default(cuid())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id])
+  weight      Float?
+  bodyFat     Float?
+  muscleMass  Float?
+  chest       Float?
+  waist       Float?
+  hips        Float?
+  arms        Float?
+  thighs      Float?
+  recordedAt  DateTime @default(now())
+  @@index([memberId, recordedAt])
+}
+
+// Notification
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        String   // BOOKING, PAYMENT, WORKOUT, SYSTEM
+  isRead      Boolean  @default(false)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  @@index([userId, isRead])
+}
+
+// Audit Log
+model AuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String?
+  userId      String
+  action      String
+  entity      String
+  entityId    String
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  @@index([tenantId, createdAt])
+}
