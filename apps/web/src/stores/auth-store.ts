@@ -36,7 +36,10 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== "undefined") {
           localStorage.setItem("gymos_access_token", token);
           localStorage.setItem("gymos_refresh_token", refreshToken);
-          document.cookie = `gymos_access_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          document.cookie = `gymos_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          if (user.role) {
+            document.cookie = `gymos_role=${user.role}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          }
         }
       },
 
@@ -51,8 +54,8 @@ export const useAuthStore = create<AuthState>()(
         if (typeof window !== "undefined") {
           localStorage.removeItem("gymos_access_token");
           localStorage.removeItem("gymos_refresh_token");
-          document.cookie =
-            "gymos_access_token=; path=/; max-age=0";
+          document.cookie = "gymos_token=; path=/; max-age=0";
+          document.cookie = "gymos_role=; path=/; max-age=0";
         }
       },
 
@@ -62,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
         set({ token });
         if (typeof window !== "undefined") {
           localStorage.setItem("gymos_access_token", token);
-          document.cookie = `gymos_access_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+          document.cookie = `gymos_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
         }
       },
 

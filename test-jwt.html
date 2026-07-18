@@ -1,0 +1,16 @@
+<script>
+  try {
+    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXJwdnhydHAwMDAwYTZrNXR6d2xwMzgyIiwiZW1haWwiOiJhZG1pbkBneW1vcy5sayIsInJvbGUiOiJTVVBFUl9BRE1JTiIsImlhdCI6MTc4NDM1MTQ5MSwiZXhwIjoxNzg0MzUyMzkxfQ.p5hobj0K3P-GWZLMDLFwvHyz6mMdi7YR09BnHp9LNU4";
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    console.log(JSON.parse(jsonPayload));
+  } catch(e) {
+    console.error("FAILED", e.message);
+  }
+</script>

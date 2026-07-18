@@ -8,18 +8,21 @@ async function main() {
 
   // ─── SUPER ADMIN ───
   const adminPassword = await bcrypt.hash('Admin123!', 12);
-  const superAdmin = await prisma.user.upsert({
-    where: { tenantId_email: { tenantId: null as any, email: 'admin@gymos.lk' } },
-    update: {},
-    create: {
-      email: 'admin@gymos.lk',
-      passwordHash: adminPassword,
-      firstName: 'Super',
-      lastName: 'Admin',
-      role: 'SUPER_ADMIN',
-      isActive: true,
-    },
+  let superAdmin = await prisma.user.findFirst({
+    where: { email: 'admin@gymos.lk', role: 'SUPER_ADMIN' },
   });
+  if (!superAdmin) {
+    superAdmin = await prisma.user.create({
+      data: {
+        email: 'admin@gymos.lk',
+        passwordHash: adminPassword,
+        firstName: 'Super',
+        lastName: 'Admin',
+        role: 'SUPER_ADMIN',
+        isActive: true,
+      },
+    });
+  }
   console.log(`✅ Super Admin: ${superAdmin.email}`);
 
   // ─── DEMO TENANT ───

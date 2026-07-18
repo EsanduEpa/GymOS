@@ -82,5 +82,9 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
     }
+  },
+  "prisma": {
+    "schema": "src/prisma/schema.prisma",
+    "seed": "ts-node -r tsconfig-paths/register src/prisma/seed.ts"
   }
 }

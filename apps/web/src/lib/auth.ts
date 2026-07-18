@@ -19,7 +19,12 @@ export function setToken(accessToken: string, refreshToken?: string): void {
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
   }
   // Also set as cookie for middleware access
-  document.cookie = `${TOKEN_KEY}=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  document.cookie = `gymos_token=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  
+  const role = getUserRole(accessToken);
+  if (role) {
+    document.cookie = `gymos_role=${role}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`;
+  }
 }
 
 export function removeToken(): void {
@@ -27,8 +32,9 @@ export function removeToken(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
-  // Remove cookie
-  document.cookie = `${TOKEN_KEY}=; path=/; max-age=0`;
+  // Remove cookies
+  document.cookie = `gymos_token=; path=/; max-age=0`;
+  document.cookie = `gymos_role=; path=/; max-age=0`;
 }
 
 export function setUser(user: Record<string, unknown>): void {
