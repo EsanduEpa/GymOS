@@ -60,7 +60,7 @@ export default function TrainerDashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Welcome back, Coach!</h1>
-          <p className="text-slate-400 mt-1">Here is what's happening today.</p>
+          <p className="text-slate-400 mt-1">{"Here is what's happening today."}</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" className="border-white/10 text-white" asChild>
@@ -96,7 +96,7 @@ export default function TrainerDashboard() {
         <motion.div variants={itemVariants} className="lg:col-span-1 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Activity className="h-5 w-5 text-indigo-400" /> Today's Schedule
+              <Activity className="h-5 w-5 text-indigo-400" /> {"Today's Schedule"}
             </h2>
           </div>
           

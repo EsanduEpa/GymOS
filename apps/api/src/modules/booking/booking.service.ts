@@ -109,6 +109,32 @@ export class BookingService {
     };
   }
 
+  async findOne(id: string, tenantId: string) {
+    const booking = await this.prisma.booking.findFirst({
+      where: {
+        id,
+        class: { tenantId },
+      },
+      include: {
+        class: true,
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    return booking;
+  }
+
   async cancel(id: string, userId: string, tenantId: string) {
     const booking = await this.prisma.booking.findFirst({
       where: {
@@ -178,13 +204,23 @@ export class BookingService {
     return { message: 'Booking cancelled successfully' };
   }
 
-  async findAllForUser(userId: string, tenantId: string, page = 1, limit = 20) {
+  async findAllForUser(
+    userId: string,
+    tenantId: string,
+    status?: BookingStatus,
+    page = 1,
+    limit = 20,
+  ) {
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: any = {
       userId,
       class: { tenantId },
     };
+
+    if (status) {
+      where.status = status;
+    }
 
     const [bookings, total] = await Promise.all([
       this.prisma.booking.findMany({

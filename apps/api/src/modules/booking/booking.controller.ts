@@ -16,6 +16,8 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentTenant } from '../../common/decorators/current-tenant.decorator';
+import { BookingStatus } from '@prisma/client';
 
 @ApiTags('Bookings')
 @ApiBearerAuth()
@@ -27,35 +29,52 @@ export class BookingController {
   @Post()
   @ApiOperation({ summary: 'Book a class' })
   @Roles('MEMBER', 'GYM_OWNER', 'GYM_ADMIN')
-  create(@CurrentUser() user: any, @Body() dto: CreateBookingDto) {
-    return this.bookingService.create(user.id, dto.classId);
+  create(
+    @CurrentUser() user: any,
+    @CurrentTenant() tenantId: string,
+    @Body() dto: CreateBookingDto,
+  ) {
+    return this.bookingService.create(dto, user.id, tenantId);
   }
 
   @Get()
   @ApiOperation({ summary: 'List user bookings' })
   findAll(
     @CurrentUser() user: any,
-    @Query('status') status?: string,
+    @CurrentTenant() tenantId: string,
+    @Query('status') status?: BookingStatus,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ) {
-    return this.bookingService.findAllByUser(user.id, status);
+    return this.bookingService.findAllForUser(user.id, tenantId, status, page, limit);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get booking by ID' })
-  findOne(@Param('id') id: string) {
-    return this.bookingService.findOne(id);
+  findOne(
+    @Param('id') id: string,
+    @CurrentTenant() tenantId: string,
+  ) {
+    return this.bookingService.findOne(id, tenantId);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Cancel a booking' })
-  cancel(@CurrentUser() user: any, @Param('id') id: string) {
-    return this.bookingService.cancel(id, user.id);
+  cancel(
+    @CurrentUser() user: any,
+    @CurrentTenant() tenantId: string,
+    @Param('id') id: string,
+  ) {
+    return this.bookingService.cancel(id, user.id, tenantId);
   }
 
   @Patch(':id/attend')
   @ApiOperation({ summary: 'Mark booking as attended (Trainer only)' })
   @Roles('TRAINER', 'GYM_OWNER', 'GYM_ADMIN')
-  markAttended(@Param('id') id: string) {
-    return this.bookingService.markAttended(id);
+  markAttended(
+    @Param('id') id: string,
+    @CurrentTenant() tenantId: string,
+  ) {
+    return this.bookingService.markAttended(id, tenantId);
   }
 }

@@ -97,7 +97,7 @@ export default function PlansPage() {
             Membership Plans
           </h1>
           <p className="text-slate-400 mt-1">
-            Manage your gym's pricing and subscription tiers.
+            {"Manage your gym's pricing and subscription tiers."}
           </p>
         </div>
         

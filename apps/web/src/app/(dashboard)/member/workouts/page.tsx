@@ -129,7 +129,7 @@ export default function MemberWorkoutsPage() {
                     <CardContent className="p-6 pt-0 border-t border-white/5">
                       {workout.notes && (
                         <div className="bg-white/5 p-4 rounded-xl mt-4 mb-6 border border-white/5">
-                          <p className="text-sm text-slate-300 italic">"{workout.notes}"</p>
+                          <p className="text-sm text-slate-300 italic">&ldquo;{workout.notes}&rdquo;</p>
                         </div>
                       )}
                       
